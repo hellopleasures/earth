@@ -40,7 +40,6 @@ const fetchSchumannData = async (): Promise<SchumannData | null> => {
 type Tab = 'chat' | 'status' | 'data'
 
 export default function DashboardFeature() {
-  const [activeTab, setActiveTab] = useState<Tab>('chat')
   const [message, setMessage] = useState('')
   const [conversation, setConversation] = useState<{ role: 'user' | 'earth', content: string }[]>([
     { role: 'earth', content: 'Greetings, I am Earth - your planetary guide. I contain the knowledge of all natural systems, ecosystems, geology, climate, and life that exists within me. How may I assist you today?' }
@@ -89,71 +88,13 @@ export default function DashboardFeature() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="tabs tabs-boxed justify-center mb-4">
-        <a 
-          className={`tab ${activeTab === 'chat' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('chat')}
-        >
-          Earth Chat
-        </a>
-        <a 
-          className={`tab ${activeTab === 'status' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('status')}
-        >
-          Planetary Status
-        </a>
-        <a 
-          className={`tab ${activeTab === 'data' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('data')}
-        >
-          Earth Data
-        </a>
-      </div>
-
-      <div className="flex-1">
-        {activeTab === 'chat' && (
-          <div className="flex flex-col h-full">
-            <div className="flex-1 max-w-4xl mx-auto w-full p-4 space-y-4 overflow-auto">
-              {conversation.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
-                >
-                  <div className={`chat-bubble ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-primary-content' 
-                      : 'bg-neutral text-neutral-content'
-                  }`}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={handleSubmit} className="p-4 border-t border-base-300">
-              <div className="max-w-4xl mx-auto flex gap-2">
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask Earth anything..."
-                  className="input input-bordered flex-1"
-                />
-                <button type="submit" className="btn btn-primary">
-                  Send
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-        {activeTab === 'status' && <EarthStatus />}
-        {activeTab === 'data' && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-4">Earth Data Analysis</h2>
-            {/* Add Earth data visualizations here */}
-          </div>
-        )}
-      </div>
+    <div className="container mx-auto p-4">
+      <EarthStatus 
+        conversation={conversation}
+        message={message}
+        setMessage={setMessage}
+        handleSubmit={handleSubmit}
+      />
     </div>
   )
 }

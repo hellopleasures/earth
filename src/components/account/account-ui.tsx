@@ -12,7 +12,6 @@ import {
   useGetBalance,
   useGetSignatures,
   useGetTokenAccounts,
-  useRequestAirdrop,
   useTransferSol,
 } from './account-data-access'
 
@@ -32,54 +31,20 @@ export function AccountChecker() {
   if (!publicKey) {
     return null
   }
-  return <AccountBalanceCheck address={publicKey} />
-}
-export function AccountBalanceCheck({ address }: { address: PublicKey }) {
-  const { cluster } = useCluster()
-  const mutation = useRequestAirdrop({ address })
-  const query = useGetBalance({ address })
-
-  if (query.isLoading) {
-    return null
-  }
-  if (query.isError || !query.data) {
-    return (
-      <div className="alert alert-warning text-warning-content/80 rounded-none flex justify-center">
-        <span>
-          You are connected to <strong>{cluster.name}</strong> but your account is not found on this cluster.
-        </span>
-        <button
-          className="btn btn-xs btn-neutral"
-          onClick={() => mutation.mutateAsync(1).catch((err) => console.log(err))}
-        >
-          Request Airdrop
-        </button>
-      </div>
-    )
-  }
   return null
 }
 
 export function AccountButtons({ address }: { address: PublicKey }) {
   const wallet = useWallet()
   const { cluster } = useCluster()
-  const [showAirdropModal, setShowAirdropModal] = useState(false)
   const [showReceiveModal, setShowReceiveModal] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
 
   return (
     <div>
-      <ModalAirdrop hide={() => setShowAirdropModal(false)} address={address} show={showAirdropModal} />
       <ModalReceive address={address} show={showReceiveModal} hide={() => setShowReceiveModal(false)} />
       <ModalSend address={address} show={showSendModal} hide={() => setShowSendModal(false)} />
       <div className="space-x-2">
-        <button
-          disabled={cluster.network?.includes('mainnet')}
-          className="btn btn-xs lg:btn-md btn-outline"
-          onClick={() => setShowAirdropModal(true)}
-        >
-          Airdrop
-        </button>
         <button
           disabled={wallet.publicKey?.toString() !== address.toString()}
           className="btn btn-xs lg:btn-md btn-outline"
@@ -272,33 +237,6 @@ function ModalReceive({ hide, show, address }: { hide: () => void; show: boolean
     <AppModal title="Receive" hide={hide} show={show}>
       <p>Receive assets by sending them to your public key:</p>
       <code>{address.toString()}</code>
-    </AppModal>
-  )
-}
-
-function ModalAirdrop({ hide, show, address }: { hide: () => void; show: boolean; address: PublicKey }) {
-  const mutation = useRequestAirdrop({ address })
-  const [amount, setAmount] = useState('2')
-
-  return (
-    <AppModal
-      hide={hide}
-      show={show}
-      title="Airdrop"
-      submitDisabled={!amount || mutation.isPending}
-      submitLabel="Request Airdrop"
-      submit={() => mutation.mutateAsync(parseFloat(amount)).then(() => hide())}
-    >
-      <input
-        disabled={mutation.isPending}
-        type="number"
-        step="any"
-        min="1"
-        placeholder="Amount"
-        className="input input-bordered w-full"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
     </AppModal>
   )
 }

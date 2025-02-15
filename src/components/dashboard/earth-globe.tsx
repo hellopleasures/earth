@@ -3,6 +3,7 @@ import Globe from 'globe.gl';
 import { EarthData } from '@/services/earth-monitoring';
 import * as THREE from 'three';
 import React from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
 interface GlobePoint {
   lat: number;
@@ -171,215 +172,231 @@ export function EarthGlobe({ data }: { data: EarthData }) {
     let mounted = true;
     let animationId: number;
     const init = async () => {
-      globe.current = new Globe(globeEl.current!)
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-        .atmosphereColor('rgb(59, 130, 246)')
-        .atmosphereAltitude(0.15)
-        .pointsData(generateGlobePoints(data))
-        .pointColor('color')
-        .pointRadius('size')
-        .pointLabel('label')
-        .pointAltitude(0.01);
+      try {
+        const element = globeEl.current as HTMLElement;
+        
+        globe.current = new Globe(element)
+          .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+          .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+          .atmosphereColor('rgb(59, 130, 246)')
+          .atmosphereAltitude(0.15)
+          .pointsData(generateGlobePoints(data))
+          .pointColor('color')
+          .pointRadius('size')
+          .pointLabel('label')
+          .pointAltitude(0.01);
 
-      // Add magnetic field visualization
-      globe.current
-        .customLayerData(MAGNETIC_FIELD_LINES)
-        .customThreeObject((d: any) => {
+        if (!globe.current) return;
+
+        const magneticFieldLines = MAGNETIC_FIELD_LINES.map(d => {
+          if (!globe.current) return null;
+
           const curve = new THREE.CatmullRomCurve3(
             generateMagneticFieldLine(d.start.lat, d.start.lng, d.end.lat, d.end.lng)
               .map(([lng, lat, alt]) => {
-                const coord = globe.current!.getCoords(lat, lng, alt);
+                if (!globe.current) return new THREE.Vector3(0, 0, 0);
+                const coord = globe.current.getCoords(lat, lng, alt);
                 return new THREE.Vector3(coord.x, coord.y, coord.z);
               })
           );
           
           const geometry = new THREE.TubeGeometry(curve, 64, 0.003 * d.strength, 8, false);
           const material = new THREE.MeshPhongMaterial({
-            color: getFieldLineColor(d.strength, d.isAnomaly ?? false),
+            color: getFieldLineColor(d.strength, (d as MagneticFieldLine).isAnomaly ?? false),
             transparent: true,
-            opacity: 0.4 + (d.isAnomaly ? 0.2 : 0),
+            opacity: 0.4 + ((d as MagneticFieldLine).isAnomaly ? 0.2 : 0),
             blending: THREE.AdditiveBlending,
-            emissive: d.isAnomaly ? 0x331111 : 0x112233,
-            emissiveIntensity: d.isAnomaly ? 0.5 : 0.2
+            emissive: (d as MagneticFieldLine).isAnomaly ? 0x331111 : 0x112233,
+            emissiveIntensity: (d as MagneticFieldLine).isAnomaly ? 0.5 : 0.2
           });
           
           return new THREE.Mesh(geometry, material);
-        });
+        }).filter(Boolean);
 
-      // Add solar wind particles
-      const particlesMaterial = new THREE.PointsMaterial({
-        size: 0.01,
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending,
-      });
-
-      particlesRef.current = new THREE.Points(generateParticles(), particlesMaterial);
-      globe.current.scene().add(particlesRef.current);
-
-      // Enhanced aurora shader
-      const auroraGeometry = new THREE.SphereGeometry(1.02, 128, 128);
-      const auroraMaterial = new THREE.ShaderMaterial({
-        transparent: true,
-        uniforms: {
-          time: { value: 0 },
-          intensity: { value: data.geomagneticActivity.globalIndex / 9 },
-          solarActivity: { value: data.solarActivity.kpIndex / 9 },
-        },
-        vertexShader: `
-          varying vec3 vNormal;
-          varying vec2 vUv;
-          void main() {
-            vNormal = normal;
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform float time;
-          uniform float intensity;
-          uniform float solarActivity;
-          varying vec3 vNormal;
-          varying vec2 vUv;
-          
-          float randNoise(vec2 p) {
-            return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-          }
-          
-          void main() {
-            float aurora = pow(abs(vNormal.y), 8.0) * intensity;
-            float wave = sin(time * 0.5 + vUv.x * 10.0 + vUv.y * 5.0);
-            float noiseVal = randNoise(vUv * 10.0 + time);
-            
-            vec3 baseColor = mix(
-              vec3(0.1, 0.5, 0.2),
-              vec3(0.2, 0.8, 0.4),
-              wave
-            );
-            
-            vec3 activeColor = mix(
-              baseColor,
-              vec3(0.5, 0.8, 1.0),
-              solarActivity * noiseVal
-            );
-            
-            float alpha = aurora * (0.5 + 0.5 * wave) * (0.8 + 0.2 * noiseVal);
-            gl_FragColor = vec4(activeColor, alpha * intensity);
-          }
-        `,
-      });
-
-      const auroraMesh = new THREE.Mesh(auroraGeometry, auroraMaterial);
-      globe.current.scene().add(auroraMesh);
-
-      // Add cloud layer
-      const textureLoader = new THREE.TextureLoader();
-      textureLoader.crossOrigin = 'anonymous';
-
-      const loadCloudTexture = () => {
-        return new Promise((resolve, reject) => {
-          textureLoader.load(
-            '//unpkg.com/three-globe/example/img/clouds.png',
-            resolve,
-            undefined,
-            reject
-          );
-        });
-      };
-
-      try {
-        const cloudTexture = await loadCloudTexture();
-        if (!mounted) return;
-        
-        const cloudGeometry = new THREE.SphereGeometry(1.01, 64, 64);
-        const cloudMaterial = new THREE.MeshPhongMaterial({
-          map: cloudTexture as THREE.Texture,
-          transparent: true,
-          opacity: 0.4,
-        });
-        cloudRef.current = new THREE.Mesh(cloudGeometry, cloudMaterial);
-        globe.current?.scene().add(cloudRef.current);
-      } catch (error) {
-        console.warn('Failed to load cloud texture:', error);
-      }
-
-      // Enhanced animation loop
-      let time = 0;
-      const animate = () => {
-        if (!mounted) return;
-        
-        time += 0.01;
-        
-        if (particlesRef.current) {
-          const geometry = particlesRef.current.geometry;
-          const positions = geometry.attributes.position.array as Float32Array;
-          const velocities = geometry.attributes.velocity.array as Float32Array;
-          const colors = geometry.attributes.color.array as Float32Array;
-          
-          // Declare temporary vectors to avoid allocating new objects in each iteration
-          const pos = new THREE.Vector3();
-          const fieldDirection = new THREE.Vector3();
-          
-          for (let i = 0; i < positions.length; i += 3) {
-            // Reuse the temporary vector for current position
-            pos.set(positions[i], positions[i + 1], positions[i + 2]);
-            const distance = pos.length();
-            const magneticFieldStrength = (data.geomagneticActivity.globalIndex / 9) * 0.001;
-            
-            // Calculate magnetic field direction (simplified dipole field) by reusing another temporary vector
-            fieldDirection.copy(pos).normalize();
-
-            // Apply magnetic force to velocity
-            velocities[i]     += fieldDirection.x * magneticFieldStrength;
-            velocities[i + 1] += fieldDirection.y * magneticFieldStrength;
-            velocities[i + 2] += fieldDirection.z * magneticFieldStrength;
-            
-            // Update position
-            positions[i]     += velocities[i];
-            positions[i + 1] += velocities[i + 1];
-            positions[i + 2] += velocities[i + 2];
-            
-            // Reset particles that go too far
-            if (distance > 2) {
-              const phi = Math.random() * Math.PI * 2;
-              const theta = Math.random() * Math.PI;
-              const r = 1.5;
-              
-              positions[i]     = r * Math.sin(theta) * Math.cos(phi);
-              positions[i + 1] = r * Math.sin(theta) * Math.sin(phi);
-              positions[i + 2] = r * Math.cos(theta);
-              
-              // Reset velocity
-              velocities[i]     = (Math.random() - 0.5) * 0.002;
-              velocities[i + 1] = (Math.random() - 0.5) * 0.002;
-              velocities[i + 2] = (Math.random() - 0.5) * 0.002;
+        if (globe.current && globe.current.scene()) {
+          magneticFieldLines.forEach(line => {
+            if (line && globe.current && globe.current.scene()) {
+              globe.current.scene().add(line);
             }
-  
-            // Update particle color based on field strength
-            const fieldStrength = Math.min(1, distance * magneticFieldStrength * 1000);
-            colors[i]     = 0.5 + fieldStrength * 0.5;     // R
-            colors[i + 1] = 0.7 + fieldStrength * 0.3;     // G
-            colors[i + 2] = 1.0 - fieldStrength * 0.2;     // B
-          }
-          
-          geometry.attributes.position.needsUpdate = true;
-          geometry.attributes.color.needsUpdate = true;
+          });
         }
-  
-        if (cloudRef.current) {
-          cloudRef.current.rotation.y += 0.0002;
-        }
-  
-        // Update aurora uniforms
-        const auroraMaterial = auroraMesh.material as THREE.ShaderMaterial;
-        auroraMaterial.uniforms.time.value = time;
-        
-        animationId = requestAnimationFrame(animate);
-      };
 
-      animate();
+        // Add solar wind particles
+        const particlesMaterial = new THREE.PointsMaterial({
+          size: 0.01,
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending,
+        });
+
+        particlesRef.current = new THREE.Points(generateParticles(), particlesMaterial);
+        globe.current.scene().add(particlesRef.current);
+
+        // Enhanced aurora shader
+        const auroraGeometry = new THREE.SphereGeometry(1.02, 128, 128);
+        const auroraMaterial = new THREE.ShaderMaterial({
+          transparent: true,
+          uniforms: {
+            time: { value: 0 },
+            intensity: { value: data.geomagneticActivity.globalIndex / 9 },
+            solarActivity: { value: data.solarActivity.kpIndex / 9 },
+          },
+          vertexShader: `
+            varying vec3 vNormal;
+            varying vec2 vUv;
+            void main() {
+              vNormal = normal;
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform float time;
+            uniform float intensity;
+            uniform float solarActivity;
+            varying vec3 vNormal;
+            varying vec2 vUv;
+            
+            float randNoise(vec2 p) {
+              return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+            }
+            
+            void main() {
+              float aurora = pow(abs(vNormal.y), 8.0) * intensity;
+              float wave = sin(time * 0.5 + vUv.x * 10.0 + vUv.y * 5.0);
+              float noiseVal = randNoise(vUv * 10.0 + time);
+              
+              vec3 baseColor = mix(
+                vec3(0.1, 0.5, 0.2),
+                vec3(0.2, 0.8, 0.4),
+                wave
+              );
+              
+              vec3 activeColor = mix(
+                baseColor,
+                vec3(0.5, 0.8, 1.0),
+                solarActivity * noiseVal
+              );
+              
+              float alpha = aurora * (0.5 + 0.5 * wave) * (0.8 + 0.2 * noiseVal);
+              gl_FragColor = vec4(activeColor, alpha * intensity);
+            }
+          `,
+        });
+
+        const auroraMesh = new THREE.Mesh(auroraGeometry, auroraMaterial);
+        globe.current.scene().add(auroraMesh);
+
+        // Add cloud layer
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = 'anonymous';
+
+        const loadCloudTexture = () => {
+          return new Promise((resolve, reject) => {
+            textureLoader.load(
+              '//unpkg.com/three-globe/example/img/clouds.png',
+              resolve,
+              undefined,
+              reject
+            );
+          });
+        };
+
+        try {
+          const cloudTexture = await loadCloudTexture();
+          if (!mounted) return;
+          
+          const cloudGeometry = new THREE.SphereGeometry(1.01, 64, 64);
+          const cloudMaterial = new THREE.MeshPhongMaterial({
+            map: cloudTexture as THREE.Texture,
+            transparent: true,
+            opacity: 0.4,
+          });
+          cloudRef.current = new THREE.Mesh(cloudGeometry, cloudMaterial);
+          globe.current?.scene().add(cloudRef.current);
+        } catch (error) {
+          console.warn('Failed to load cloud texture:', error);
+        }
+
+        // Enhanced animation loop
+        let time = 0;
+        const animate = () => {
+          if (!mounted) return;
+          
+          time += 0.01;
+          
+          if (particlesRef.current) {
+            const geometry = particlesRef.current.geometry;
+            const positions = geometry.attributes.position.array as Float32Array;
+            const velocities = geometry.attributes.velocity.array as Float32Array;
+            const colors = geometry.attributes.color.array as Float32Array;
+            
+            // Declare temporary vectors to avoid allocating new objects in each iteration
+            const pos = new THREE.Vector3();
+            const fieldDirection = new THREE.Vector3();
+            
+            for (let i = 0; i < positions.length; i += 3) {
+              // Reuse the temporary vector for current position
+              pos.set(positions[i], positions[i + 1], positions[i + 2]);
+              const distance = pos.length();
+              const magneticFieldStrength = (data.geomagneticActivity.globalIndex / 9) * 0.001;
+              
+              // Calculate magnetic field direction (simplified dipole field) by reusing another temporary vector
+              fieldDirection.copy(pos).normalize();
+
+              // Apply magnetic force to velocity
+              velocities[i]     += fieldDirection.x * magneticFieldStrength;
+              velocities[i + 1] += fieldDirection.y * magneticFieldStrength;
+              velocities[i + 2] += fieldDirection.z * magneticFieldStrength;
+              
+              // Update position
+              positions[i]     += velocities[i];
+              positions[i + 1] += velocities[i + 1];
+              positions[i + 2] += velocities[i + 2];
+              
+              // Reset particles that go too far
+              if (distance > 2) {
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI;
+                const r = 1.5;
+                
+                positions[i]     = r * Math.sin(theta) * Math.cos(phi);
+                positions[i + 1] = r * Math.sin(theta) * Math.sin(phi);
+                positions[i + 2] = r * Math.cos(theta);
+                
+                // Reset velocity
+                velocities[i]     = (Math.random() - 0.5) * 0.002;
+                velocities[i + 1] = (Math.random() - 0.5) * 0.002;
+                velocities[i + 2] = (Math.random() - 0.5) * 0.002;
+              }
+    
+              // Update particle color based on field strength
+              const fieldStrength = Math.min(1, distance * magneticFieldStrength * 1000);
+              colors[i]     = 0.5 + fieldStrength * 0.5;     // R
+              colors[i + 1] = 0.7 + fieldStrength * 0.3;     // G
+              colors[i + 2] = 1.0 - fieldStrength * 0.2;     // B
+            }
+            
+            geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.color.needsUpdate = true;
+          }
+    
+          if (cloudRef.current) {
+            cloudRef.current.rotation.y += 0.0002;
+          }
+    
+          // Update aurora uniforms
+          const auroraMaterial = auroraMesh.material as THREE.ShaderMaterial;
+          auroraMaterial.uniforms.time.value = time;
+          
+          animationId = requestAnimationFrame(animate);
+        };
+
+        animate();
+      } catch (error) {
+        console.error('Error initializing globe:', error);
+      }
     };
 
     init();
@@ -406,9 +423,18 @@ export function EarthGlobe({ data }: { data: EarthData }) {
   }, [data]);
 
   return (
-    <CustomErrorBoundary>
-      <div ref={globeEl} style={{ width: '100%', height: '400px' }} />
-    </CustomErrorBoundary>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="flex justify-center items-center h-full">
+        <div 
+          ref={globeEl} 
+          style={{ 
+            maxWidth: '100%', // Maximum width
+            maxHeight: '100%', // Maximum height
+            margin: '0 auto' // Center horizontally
+          }} 
+        />
+      </div>
+    </ErrorBoundary>
   );
 }
 
