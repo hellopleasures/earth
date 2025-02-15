@@ -41,15 +41,28 @@ type Tab = 'chat' | 'status' | 'data'
 
 export default function DashboardFeature() {
   const [message, setMessage] = useState('')
-  const [conversation, setConversation] = useState<{ role: 'user' | 'earth', content: string }[]>([
-    { role: 'earth', content: 'Greetings, I am Earth - your planetary guide. I contain the knowledge of all natural systems, ecosystems, geology, climate, and life that exists within me. How may I assist you today?' }
+  const [conversation, setConversation] = useState<{ 
+    role: 'user' | 'earth';
+    content: string;
+    timestamp: string;  // Add timestamp to the conversation type
+  }[]>([
+    { 
+      role: 'earth', 
+      content: 'Greetings, I am Earth - your planetary guide. I contain the knowledge of all natural systems, ecosystems, geology, climate, and life that exists within me. How may I assist you today?',
+      timestamp: new Date().toISOString()
+    }
   ])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim()) return
 
-    setConversation(prev => [...prev, { role: 'user', content: message }])
+    // Add timestamp to user message
+    setConversation(prev => [...prev.slice(-50), { 
+      role: 'user', 
+      content: message,
+      timestamp: new Date().toISOString()
+    }])
 
     // Check if the message is asking about Earth's current state or resonance
     const isAskingAboutResonance = message.toLowerCase().includes('resonance') || 
@@ -69,7 +82,12 @@ export default function DashboardFeature() {
       earthResponse = await simulateEarthResponse(message);
     }
 
-    setConversation(prev => [...prev, { role: 'earth', content: earthResponse }])
+    // Add timestamp to earth response
+    setConversation(prev => [...prev.slice(-50), { 
+      role: 'earth', 
+      content: earthResponse,
+      timestamp: new Date().toISOString()
+    }])
     setMessage('')
   }
 
@@ -94,6 +112,7 @@ export default function DashboardFeature() {
         message={message}
         setMessage={setMessage}
         handleSubmit={handleSubmit}
+        setConversation={setConversation}
       />
     </div>
   )

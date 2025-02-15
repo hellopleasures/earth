@@ -20,21 +20,71 @@ ChartJS.register(
   Legend
 );
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { EarthData, fetchEarthData } from '@/services/earth-monitoring';
 import { Line } from 'react-chartjs-2';
 import { EarthGlobe } from './earth-globe';
 
 interface EarthStatusProps {
-  conversation: { role: 'user' | 'earth', content: string }[];
+  conversation: { 
+    role: 'user' | 'earth';
+    content: string;
+    timestamp: string;
+  }[];
   message: string;
   setMessage: (message: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  setConversation: React.Dispatch<React.SetStateAction<{
+    role: 'user' | 'earth';
+    content: string;
+    timestamp: string;
+  }[]>>;
 }
 
-export function EarthStatus({ conversation, message, setMessage, handleSubmit }: EarthStatusProps) {
+const HELP_MESSAGE = 
+`Available Commands:
+/help - Show this help message
+/data - Get an overview of current Earth measurements
+
+Data Explanations:
+🌍 Schumann Resonance (7.83 Hz baseline)
+- Earth's electromagnetic "heartbeat"
+- Changes can indicate global electromagnetic activity
+
+☀️ Solar Activity
+- Kp Index (0-9): Measure of geomagnetic disturbance
+- Solar Wind: Speed of particles from the sun
+- Solar Flares: Sudden releases of energy
+
+🧲 Geomagnetic Activity
+- Global Index: Overall planetary magnetic field strength
+- Local Strength: Regional magnetic field measurements
+- Anomalies: Unusual magnetic field patterns
+
+💫 Global Coherence
+- Coherence (0-1): Measure of global field stability
+- Active Nodes: Number of monitoring stations
+- Dominant Frequency: Most prevalent resonant frequency
+
+🌊 Wind Patterns
+- Jet Streams: High-altitude wind currents
+- Trade Winds: Consistent surface wind patterns
+- Pressure Systems: High and low pressure areas
+
+🌋 Earthquakes
+- Recent Activity: Latest seismic events
+- Daily Count: Number of recorded events
+- Highest Magnitude: Strongest recent earthquake
+
+⚡ Geomagnetic Storms
+- Storm Level (0-5): Intensity of magnetic disturbance
+- Expected Duration: Predicted length of the event
+- Polar Activity: Aurora potential`;
+
+export function EarthStatus({ conversation, message, setMessage, handleSubmit: propHandleSubmit, setConversation }: EarthStatusProps) {
   const [earthData, setEarthData] = useState<EarthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateEarthData = async () => {
@@ -53,12 +103,100 @@ export function EarthStatus({ conversation, message, setMessage, handleSubmit }:
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [conversation]);
+
   if (loading) {
     return <div className="loading loading-spinner loading-lg"></div>;
   }
 
   if (!earthData) {
     return <div className="alert alert-error">Unable to connect to Earth&apos;s monitoring systems</div>;
+  }
+
+  const handleLocalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    // Add the user message to the conversation first with timestamp
+    setConversation(prev => [...prev, { 
+      role: 'user', 
+      content: message,
+      timestamp: new Date().toISOString()
+    }]);
+
+    if (message.startsWith('/')) {
+      let response = '';
+      
+      switch (message.toLowerCase()) {
+        case '/help':
+          response = HELP_MESSAGE;
+          break;
+        case '/data':
+          if (earthData) {
+            response = generateDataSummary(earthData);
+          } else {
+            response = "Earth data is currently unavailable.";
+          }
+          break;
+        default:
+          response = "Unknown command. Type /help to see available commands.";
+      }
+
+      // Add Earth's response to the conversation with timestamp
+      setConversation(prev => [...prev, { 
+        role: 'earth', 
+        content: response,
+        timestamp: new Date().toISOString()
+      }]);
+      setMessage('');
+      return;
+    }
+
+    // For non-command messages, use the provided handleSubmit
+    propHandleSubmit(e);
+  };
+
+  function generateDataSummary(data: EarthData) {
+    return `
+Current Earth Status:
+
+🌍 Schumann Resonance: ${data.schumann.frequency.toFixed(2)} Hz
+${Math.abs(data.schumann.frequency - 7.83) > 0.1 ? '⚠️ Deviation from baseline' : '✅ Stable'}
+
+☀️ Solar Activity:
+- Kp Index: ${data.solarActivity.kpIndex}/9
+- Solar Wind: ${Math.round(data.solarActivity.solarWindSpeed)} km/s
+${data.solarActivity.solarFlares.length > 0 ? `⚠️ ${data.solarActivity.solarFlares[0]}` : '✅ No solar flares'}
+
+🧲 Geomagnetic Field:
+- Global Index: ${data.geomagneticActivity.globalIndex.toFixed(2)}
+- Field Strength: ${Math.round(data.geomagneticActivity.localStrength)} nT
+${data.geomagneticActivity.anomalies.length > 0 ? `⚠️ ${data.geomagneticActivity.anomalies[0]}` : '✅ No anomalies'}
+
+💫 Global Coherence: ${(data.coherenceData.globalCoherence * 100).toFixed(1)}%
+Active Monitoring Nodes: ${data.coherenceData.activeNodes}
+
+🌊 Wind Patterns:
+- Trade Winds: ${data.windPatterns.tradeWindStrength.toFixed(1)} knots
+- Pressure Systems: ${data.windPatterns.pressureSystems.map(sys => 
+    `${sys.type.toUpperCase()} (${sys.pressure} hPa at ${sys.location})`
+  ).join(', ')}
+
+🌋 Recent Earthquakes:
+- Today: ${data.earthquakes.dailyCount} events
+- Strongest: M${data.earthquakes.highestMagnitude.toFixed(1)}
+${data.earthquakes.recentQuakes.length > 0 ? 
+  `- Latest: M${data.earthquakes.recentQuakes[0].magnitude.toFixed(1)} at ${data.earthquakes.recentQuakes[0].location}` : 
+  ''}
+
+⚡ Geomagnetic Storm Status:
+Level ${data.geomagneticStorms.stormLevel}/5
+${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No significant storm activity'}
+`;
   }
 
   return (
@@ -222,7 +360,7 @@ export function EarthStatus({ conversation, message, setMessage, handleSubmit }:
         <div className="p-2 flex-1">
           <div className="card bg-base-200 shadow-xl h-full flex flex-col">
             <div className="card-body p-2 flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto max-h-[400px]">
                 {conversation.map((msg, index) => (
                   <div
                     key={index}
@@ -231,12 +369,18 @@ export function EarthStatus({ conversation, message, setMessage, handleSubmit }:
                     <div className={`chat-bubble ${
                       msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
                     }`}>
-                      {msg.content}
+                      <div className="flex flex-col">
+                        <span>{msg.content}</span>
+                        <span className="text-xs opacity-50 mt-1">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
+                <div ref={chatEndRef} />
               </div>
-              <form onSubmit={handleSubmit} className="mt-2">
+              <form onSubmit={handleLocalSubmit} className="mt-2">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -638,7 +782,7 @@ export function EarthStatus({ conversation, message, setMessage, handleSubmit }:
           <div className="w-1/2 p-2">
             <div className="card bg-base-200 shadow-xl h-full flex flex-col">
               <div className="card-body p-2 flex-1 flex flex-col">
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto max-h-[400px]">
                   {conversation.map((msg, index) => (
                     <div
                       key={index}
@@ -647,12 +791,18 @@ export function EarthStatus({ conversation, message, setMessage, handleSubmit }:
                       <div className={`chat-bubble ${
                         msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
                       }`}>
-                        {msg.content}
+                        <div className="flex flex-col">
+                          <span>{msg.content}</span>
+                          <span className="text-xs opacity-50 mt-1">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
+                  <div ref={chatEndRef} />
                 </div>
-                <form onSubmit={handleSubmit} className="mt-2">
+                <form onSubmit={handleLocalSubmit} className="mt-2">
                   <div className="flex gap-2">
                     <input
                       type="text"
