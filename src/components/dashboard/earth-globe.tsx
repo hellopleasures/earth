@@ -176,15 +176,19 @@ export function EarthGlobe({ data }: { data: EarthData }) {
         const element = globeEl.current as HTMLElement;
         
         globe.current = new Globe(element)
-          .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-          .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-          .atmosphereColor('rgb(59, 130, 246)')
-          .atmosphereAltitude(0.15)
+          .backgroundColor('rgba(0,0,0,0)')
+          .width(300)         // Set fixed width
+          .height(300)        // Set fixed height
+          .globeImageUrl('/earth-blue-marble.jpg')
+          .bumpImageUrl('/earth-topology.png')
+          .showAtmosphere(true)
+          .atmosphereColor('lightskyblue')
+          .atmosphereAltitude(0.1)
           .pointsData(generateGlobePoints(data))
           .pointColor('color')
+          .pointAltitude(0)
           .pointRadius('size')
-          .pointLabel('label')
-          .pointAltitude(0.01);
+          .pointLabel('label');
 
         if (!globe.current) return;
 

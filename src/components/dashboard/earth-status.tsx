@@ -24,6 +24,8 @@ import { useEffect, useState, useRef } from 'react';
 import { EarthData, fetchEarthData } from '@/services/earth-monitoring';
 import { Line } from 'react-chartjs-2';
 import { EarthGlobe } from './earth-globe';
+import { StatusBars } from './status-bars';
+import { EarthMetrics } from './earth-metrics';
 
 interface EarthStatusProps {
   conversation: { 
@@ -400,424 +402,60 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
       </div>
 
       {/* Desktop Layout - Quadrants */}
-      <div className="hidden md:flex flex-col h-full">
-        {/* Top Row */}
-        <div className="flex flex-1">
-          {/* Top Left Quadrant - Earth Globe */}
-          <div className="w-1/2 p-2">
-            <div className="card bg-base-200 shadow-xl h-full">
-              <div className="card-body p-1">
-                <h2 className="card-title text-xs">Earth Monitoring Network</h2>
-                <div className="h-full">
-                  <EarthGlobe data={earthData} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Top Right Quadrant - Accordion Menu */}
-          <div className="w-1/2 p-2">
-            <div className="card bg-base-200 shadow-xl h-full overflow-y-auto">
-              <div className="card-body p-2">
-                <div className="space-y-2">
-                  {/* Schumann Resonance Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" defaultChecked /> 
-                    <div className="collapse-title text-sm font-medium">
-                      Schumann Resonance
-                    </div>
-                    <div className="collapse-content">
-                      <p className="text-2xl font-bold mb-2">{earthData.schumann.frequency.toFixed(2)} Hz</p>
-                      <div className="space-y-2 mb-2">
-                        <p>Amplitude: <span className="font-bold">{earthData.schumann.amplitude.toFixed(2)} pT</span></p>
-                        <p>Base Frequency: <span className="font-bold">7.83 Hz</span></p>
-                        <p>Deviation: <span className={`font-bold ${Math.abs(earthData.schumann.frequency - 7.83) > 0.1 ? 'text-warning' : 'text-success'}`}>
-                          {(earthData.schumann.frequency - 7.83).toFixed(3)} Hz
-                        </span></p>
-                        <p>Last Updated: <span className="font-bold">{new Date(earthData.schumann.timestamp).toLocaleTimeString()}</span></p>
-                      </div>
-                      <div className="h-24">
-                        <Line 
-                          data={{
-                            labels: ['00:00', '06:00', '12:00', '18:00'],
-                            datasets: [{
-                              label: 'Frequency',
-                              data: [7.83, earthData.schumann.frequency, earthData.schumann.frequency, earthData.schumann.frequency],
-                              borderColor: 'rgb(75, 192, 192)',
-                              tension: 0.4
-                            }]
-                          }}
-                          options={{
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: { y: { display: false }, x: { display: false } }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Solar Activity Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" />
-                    <div className="collapse-title text-sm font-medium">
-                      Solar Activity
-                    </div>
-                    <div className="collapse-content">
-                      <div className="space-y-2">
-                        <p>Kp Index: <span className="font-bold">{earthData.solarActivity.kpIndex}</span></p>
-                        <p>Solar Wind: <span className="font-bold">{Math.round(earthData.solarActivity.solarWindSpeed)} km/s</span></p>
-                        <div className="divider my-1"></div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <p className="font-semibold">Kp Scale Impact:</p>
-                            <p className={`${earthData.solarActivity.kpIndex >= 5 ? 'text-warning' : 'text-success'}`}>
-                              {earthData.solarActivity.kpIndex < 5 ? 'Minor Geomagnetic Activity' :
-                               earthData.solarActivity.kpIndex < 7 ? 'Moderate Storm' : 'Severe Storm'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="font-semibold">Wind Speed Status:</p>
-                            <p className={`${earthData.solarActivity.solarWindSpeed > 500 ? 'text-warning' : 'text-success'}`}>
-                              {earthData.solarActivity.solarWindSpeed <= 400 ? 'Normal' :
-                               earthData.solarActivity.solarWindSpeed <= 500 ? 'Elevated' : 'High Speed Stream'}
-                            </p>
-                          </div>
-                        </div>
-                        {earthData.solarActivity.solarFlares.length > 0 && (
-                          <div className="mt-2">
-                            <p className="font-semibold text-warning">Active Alerts:</p>
-                            {earthData.solarActivity.solarFlares.map((flare, index) => (
-                              <p key={index} className="text-warning text-sm">{flare}</p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Geomagnetic Activity Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" />
-                    <div className="collapse-title text-sm font-medium">
-                      Geomagnetic Activity
-                    </div>
-                    <div className="collapse-content">
-                      <div className="space-y-2">
-                        <p>Global Index: <span className="font-bold">{earthData.geomagneticActivity.globalIndex.toFixed(2)}</span></p>
-                        <p>Local Strength: <span className="font-bold">{Math.round(earthData.geomagneticActivity.localStrength)} nT</span></p>
-                        <div className="divider my-1"></div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <p className="font-semibold">Field Strength:</p>
-                            <p className={`${Math.abs(earthData.geomagneticActivity.localStrength - 25000) > 2000 ? 'text-warning' : 'text-success'}`}>
-                              {Math.abs(earthData.geomagneticActivity.localStrength - 25000) <= 1000 ? 'Normal Range' :
-                               Math.abs(earthData.geomagneticActivity.localStrength - 25000) <= 2000 ? 'Moderate Variation' : 'Significant Deviation'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="font-semibold">Global Status:</p>
-                            <p className={`${earthData.geomagneticActivity.globalIndex > 5 ? 'text-warning' : 'text-success'}`}>
-                              {earthData.geomagneticActivity.globalIndex <= 3 ? 'Quiet' :
-                               earthData.geomagneticActivity.globalIndex <= 5 ? 'Active' : 'Storm Conditions'}
-                            </p>
-                          </div>
-                        </div>
-                        {earthData.geomagneticActivity.anomalies.length > 0 && (
-                          <div className="mt-2">
-                            <p className="font-semibold text-warning">Detected Anomalies:</p>
-                            {earthData.geomagneticActivity.anomalies.map((anomaly, index) => (
-                              <p key={index} className="text-warning text-sm">{anomaly}</p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Global Coherence Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" />
-                    <div className="collapse-title text-sm font-medium">
-                      Global Coherence
-                    </div>
-                    <div className="collapse-content">
-                      <div className="space-y-2">
-                        <p>Coherence: <span className="font-bold">{earthData.coherenceData.globalCoherence.toFixed(3)}</span></p>
-                        <p>Active Nodes: <span className="font-bold">{earthData.coherenceData.activeNodes}</span></p>
-                        <p>Dominant Frequency: <span className="font-bold">{earthData.coherenceData.dominantFrequency.toFixed(2)} Hz</span></p>
-                        <div className="divider my-1"></div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <p className="font-semibold">Coherence Level:</p>
-                            <p className={`${earthData.coherenceData.globalCoherence > 0.6 ? 'text-success' : 'text-warning'}`}>
-                              {earthData.coherenceData.globalCoherence <= 0.3 ? 'Low' :
-                               earthData.coherenceData.globalCoherence <= 0.6 ? 'Moderate' : 'High'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="font-semibold">Network Status:</p>
-                            <p className={`${earthData.coherenceData.activeNodes > 30 ? 'text-success' : 'text-warning'}`}>
-                              {earthData.coherenceData.activeNodes} Monitoring Stations Active
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Earthquake Monitor Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" />
-                    <div className="collapse-title text-sm font-medium">
-                      Earthquake Monitor
-                    </div>
-                    <div className="collapse-content">
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <p>24h Activity:</p>
-                          <p className="font-bold">{earthData.earthquakes.dailyCount} events</p>
-                        </div>
-                        <div className="flex justify-between">
-                          <p>Highest Magnitude:</p>
-                          <p className={`font-bold ${
-                            earthData.earthquakes.highestMagnitude >= 6 ? 'text-error' :
-                            earthData.earthquakes.highestMagnitude >= 4 ? 'text-warning' : 'text-success'
-                          }`}>
-                            {earthData.earthquakes.highestMagnitude.toFixed(1)}
-                          </p>
-                        </div>
-                        <div className="divider my-1">Recent Activity</div>
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {earthData.earthquakes.recentQuakes.map((quake, index) => (
-                            <div key={index} className="bg-base-300 p-2 rounded-lg text-xs">
-                              <div className="flex justify-between">
-                                <span className={`font-bold ${
-                                  quake.magnitude >= 6 ? 'text-error' :
-                                  quake.magnitude >= 4 ? 'text-warning' : 'text-success'
-                                }`}>M{quake.magnitude.toFixed(1)}</span>
-                                <span>{new Date(quake.timestamp).toLocaleTimeString()}</span>
-                              </div>
-                              <p>{quake.location}</p>
-                              <p className="text-neutral-content">Depth: {quake.depth}km</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Geomagnetic Storms Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" />
-                    <div className="collapse-title text-sm font-medium">
-                      Geomagnetic Storms
-                    </div>
-                    <div className="collapse-content">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span>Storm Level:</span>
-                          <span className={`badge ${
-                            earthData.geomagneticStorms.stormLevel >= 4 ? 'badge-error' :
-                            earthData.geomagneticStorms.stormLevel >= 2 ? 'badge-warning' : 'badge-success'
-                          }`}>
-                            G{earthData.geomagneticStorms.stormLevel}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Duration:</span>
-                          <span className="font-bold">{earthData.geomagneticStorms.expectedDuration}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Intensity:</span>
-                          <span className="font-bold">{earthData.geomagneticStorms.intensity}%</span>
-                        </div>
-                        {earthData.geomagneticStorms.polarActivity && (
-                          <div className="alert alert-info text-xs mt-2">
-                            Aurora activity detected in polar regions
-                          </div>
-                        )}
-                        <div className="divider my-1">Impact Scale</div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <p className="font-semibold">Radio Propagation:</p>
-                            <p className={earthData.geomagneticStorms.stormLevel >= 3 ? 'text-warning' : 'text-success'}>
-                              {earthData.geomagneticStorms.stormLevel >= 3 ? 'Disrupted' : 'Normal'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="font-semibold">Power Grid:</p>
-                            <p className={earthData.geomagneticStorms.stormLevel >= 4 ? 'text-error' : 'text-success'}>
-                              {earthData.geomagneticStorms.stormLevel >= 4 ? 'At Risk' : 'Stable'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Wind Patterns Accordion */}
-                  <div className="collapse collapse-arrow bg-base-100">
-                    <input type="radio" name="earth-accordion-desktop" />
-                    <div className="collapse-title text-sm font-medium">
-                      Wind Patterns
-                    </div>
-                    <div className="collapse-content">
-                      <div className="space-y-2">
-                        <div className="divider my-1">Jet Streams</div>
-                        {earthData.windPatterns.globalJetStreams.map((jet, index) => (
-                          <div key={index} className="bg-base-300 p-2 rounded-lg text-xs">
-                            <div className="flex justify-between">
-                              <span>Speed:</span>
-                              <span className="font-bold">{jet.speed} km/h</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Direction:</span>
-                              <span className="font-bold">{jet.direction}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Altitude:</span>
-                              <span className="font-bold">{jet.altitude} km</span>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div className="divider my-1">Pressure Systems</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {earthData.windPatterns.pressureSystems.map((system, index) => (
-                            <div key={index} className="bg-base-300 p-2 rounded-lg text-xs">
-                              <p className={`font-bold ${system.type === 'high' ? 'text-success' : 'text-warning'}`}>
-                                {system.type === 'high' ? 'High' : 'Low'} Pressure
-                              </p>
-                              <p>{system.location}</p>
-                              <p>{system.pressure} hPa</p>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="divider my-1">Trade Winds</div>
-                        <div className="flex justify-between items-center">
-                          <span>Strength:</span>
-                          <span className={`font-bold ${
-                            earthData.windPatterns.tradeWindStrength > 30 ? 'text-warning' :
-                            earthData.windPatterns.tradeWindStrength < 10 ? 'text-error' : 'text-success'
-                          }`}>
-                            {earthData.windPatterns.tradeWindStrength} knots
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <div className="hidden md:grid md:grid-cols-2 md:grid-rows-2 gap-2 p-2 h-full">
+        {/* Top Left Quadrant - Globe */}
+        <div className="card bg-base-200 shadow-xl">
+          <div className="card-body p-2">
+            <h2 className="card-title text-xs">Earth Monitoring Network</h2>
+            <div className="h-[300px]">
+              <EarthGlobe data={earthData} />
             </div>
           </div>
         </div>
 
-        {/* Bottom Row */}
-        <div className="flex flex-1">
-          {/* Bottom Left Quadrant - Status Bars */}
-          <div className="w-1/2 p-2">
-            <div className="card bg-base-200 shadow-xl h-full">
-              <div className="card-body p-2">
-                <h2 className="card-title text-xs">System Status</h2>
-                <div className="space-y-2">
-                  {/* Status bars content... */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs">Schumann Resonance</span>
-                      <span className="text-xs">{earthData.schumann.frequency.toFixed(2)} Hz</span>
-                    </div>
-                    <progress 
-                      className="progress progress-primary" 
-                      value={earthData.schumann.frequency} 
-                      max="10"
-                    ></progress>
-                  </div>
-                  
-                  {/* Solar Activity Status */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs">Solar Activity</span>
-                      <span className="text-xs">Kp {earthData.solarActivity.kpIndex}</span>
-                    </div>
-                    <progress 
-                      className="progress progress-secondary" 
-                      value={earthData.solarActivity.kpIndex} 
-                      max="9"
-                    ></progress>
-                  </div>
+        {/* Top Right Quadrant - Metrics */}
+        <EarthMetrics earthData={earthData} />
 
-                  {/* Geomagnetic Activity */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs">Geomagnetic Activity</span>
-                      <span className="text-xs">{earthData.geomagneticActivity.globalIndex.toFixed(1)}</span>
-                    </div>
-                    <progress 
-                      className="progress progress-accent" 
-                      value={earthData.geomagneticActivity.globalIndex} 
-                      max="7"
-                    ></progress>
-                  </div>
+        {/* Bottom Left Quadrant - Status */}
+        <StatusBars earthData={earthData} />
 
-                  {/* Global Coherence */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs">Global Coherence</span>
-                      <span className="text-xs">{earthData.coherenceData.globalCoherence.toFixed(2)}</span>
+        {/* Bottom Right Quadrant - Chat */}
+        <div className="card bg-base-200 shadow-xl">
+          <div className="card-body p-2 flex flex-col">
+            <div className="flex-1 overflow-y-auto max-h-[400px]">
+              {conversation.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
+                >
+                  <div className={`chat-bubble ${
+                    msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
+                  }`}>
+                    <div className="flex flex-col">
+                      <span>{msg.content}</span>
+                      <span className="text-xs opacity-50 mt-1">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </span>
                     </div>
-                    <progress 
-                      className="progress progress-info" 
-                      value={earthData.coherenceData.globalCoherence} 
-                      max="1"
-                    ></progress>
                   </div>
                 </div>
-              </div>
+              ))}
+              <div ref={chatEndRef} />
             </div>
-          </div>
-
-          {/* Bottom Right Quadrant - Chat */}
-          <div className="w-1/2 p-2">
-            <div className="card bg-base-200 shadow-xl h-full flex flex-col">
-              <div className="card-body p-2 flex-1 flex flex-col">
-                <div className="flex-1 overflow-y-auto max-h-[400px]">
-                  {conversation.map((msg, index) => (
-                    <div
-                      key={index}
-                      className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
-                    >
-                      <div className={`chat-bubble ${
-                        msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
-                      }`}>
-                        <div className="flex flex-col">
-                          <span>{msg.content}</span>
-                          <span className="text-xs opacity-50 mt-1">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={chatEndRef} />
-                </div>
-                <form onSubmit={handleLocalSubmit} className="mt-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Ask Earth anything..."
-                      className="input input-bordered input-sm flex-1"
-                    />
-                    <button type="submit" className="btn btn-primary btn-sm">
-                      Send
-                    </button>
-                  </div>
-                </form>
+            <form onSubmit={handleLocalSubmit} className="mt-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Ask Earth anything..."
+                  className="input input-bordered input-sm flex-1"
+                />
+                <button type="submit" className="btn btn-primary btn-sm">
+                  Send
+                </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>
