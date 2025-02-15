@@ -12,6 +12,9 @@ export interface EarthData {
   solarActivity: SolarData;
   geomagneticActivity: GeomagneticData;
   coherenceData: CoherenceData;
+  earthquakes: EarthquakeData;
+  geomagneticStorms: GeomagneticStormData;
+  windPatterns: WindPatternData;
 }
 
 interface SchumannData {
@@ -37,6 +40,38 @@ interface CoherenceData {
   globalCoherence: number;
   activeNodes: number;
   dominantFrequency: number;
+}
+
+interface EarthquakeData {
+  recentQuakes: Array<{
+    magnitude: number;
+    location: string;
+    depth: number;
+    timestamp: string;
+  }>;
+  dailyCount: number;
+  highestMagnitude: number;
+}
+
+interface GeomagneticStormData {
+  stormLevel: number;
+  expectedDuration: string;
+  intensity: number;
+  polarActivity: boolean;
+}
+
+export interface WindPatternData {
+  globalJetStreams: Array<{
+    speed: number;
+    direction: string;
+    altitude: number;
+  }>;
+  tradeWindStrength: number;
+  pressureSystems: Array<{
+    type: 'high' | 'low';
+    location: string;
+    pressure: number;
+  }>;
 }
 
 export async function fetchEarthData(): Promise<EarthData> {
