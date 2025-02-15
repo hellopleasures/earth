@@ -22,12 +22,19 @@
     "@tabler/icons-react": "^3.11.0",
     "@tanstack/react-query": "^5.51.11",
     "@tanstack/react-query-next-experimental": "^5.51.11",
+    "@types/three": "^0.173.0",
+    "axios": "^1.6.0",
+    "chart.js": "4.4.0",
     "daisyui": "^4.12.10",
+    "globe.gl": "^2.39.7",
     "jotai": "^2.9.1",
     "next": "14.2.5",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-hot-toast": "^2.4.1"
+    "react": "18.2.0",
+    "react-chartjs-2": "5.2.0",
+    "react-dom": "18.2.0",
+    "react-error-boundary": "^5.0.0",
+    "react-hot-toast": "^2.4.1",
+    "three": "^0.173.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
