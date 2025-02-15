@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { generateMockEarthData } from './mock-earth-data';
 
+export interface SolarData {
+  kpIndex: number;
+  solarWindSpeed: number;
+  solarFlares: string[];
+}
+
 export interface EarthData {
   schumann: SchumannData;
   solarActivity: SolarData;
@@ -66,7 +72,7 @@ async function fetchSchumannData(): Promise<SchumannData> {
   return response.data;
 }
 
-async function fetchSolarData(): Promise<SolarActivity> {
+async function fetchSolarData(): Promise<SolarData> {
   // NOAA Space Weather Prediction Center API
   const response = await axios.get('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
   return response.data;

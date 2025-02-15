@@ -3,8 +3,10 @@ import { EarthData } from './earth-monitoring';
 export function generateMockEarthData(): EarthData {
   // Base Schumann frequency with realistic variations
   const schumannData = {
-    frequency: 7.83 + (Math.random() - 0.5) * 0.2, // More constrained variation
-    amplitude: 0.3 + Math.sin(Date.now() * 0.0001) * 0.2 + Math.random() * 0.2
+    frequency: 7.83,
+    amplitude: 1.0,
+    timestamp: new Date().toISOString(),
+    location: "Global"
   };
 
   // Solar activity with correlated Kp index and wind speed
@@ -28,11 +30,23 @@ export function generateMockEarthData(): EarthData {
     globalCoherence: Math.max(0.1, Math.min(1, baseCoherence + Math.random() * 0.3)),
     activeNodes: Math.floor(40 + Math.sin(timeOfDay * Math.PI * 2) * 20 + Math.random() * 20)
   };
-
   return {
-    schumann: schumannData,
-    solarActivity: solarData,
-    geomagneticActivity: geomagneticData,
-    coherenceData: coherenceData
+    schumann: {
+      ...schumannData,
+      timestamp: Date.now().toString(),
+      location: 'Global'
+    },
+    solarActivity: {
+      ...solarData,
+      solarFlares: Math.random() > 0.8 ? ['X-class flare detected'] : []
+    },
+    geomagneticActivity: {
+      ...geomagneticData,
+      anomalies: Math.random() > 0.8 ? ['Magnetic reversal detected'] : []
+    },
+    coherenceData: {
+      ...coherenceData,
+      dominantFrequency: 7.83 + Math.random() * 0.5
+    }
   };
 } 

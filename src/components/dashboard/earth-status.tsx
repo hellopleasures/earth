@@ -29,7 +29,7 @@ export function EarthStatus() {
   }
 
   if (!earthData) {
-    return <div className="alert alert-error">Unable to connect to Earth's monitoring systems</div>;
+    return <div className="alert alert-error">Unable to connect to Earth&apos;s monitoring systems</div>;
   }
 
   return (
