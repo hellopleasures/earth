@@ -202,9 +202,9 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Mobile Layout - Stack everything */}
-      <div className="md:hidden flex flex-col flex-1">
+    <div className="w-full h-full">
+      {/* Mobile Layout */}
+      <div className="md:hidden flex flex-col gap-2 p-2">
         {/* Status Bars */}
         <div className="p-2">
           <div className="card bg-base-200 shadow-xl mb-2">
@@ -401,28 +401,36 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
         </div>
       </div>
 
-      {/* Desktop Layout - Quadrants */}
-      <div className="hidden md:grid md:grid-cols-2 md:grid-rows-2 gap-2 p-2 h-full">
-        {/* Top Left Quadrant - Globe */}
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body p-2">
-            <h2 className="card-title text-xs">Earth Monitoring Network</h2>
-            <div className="h-[300px]">
+      {/* Desktop Layout - 2x2 Grid */}
+      <div className="hidden md:grid grid-cols-2 gap-4 p-4 h-[calc(100vh-4rem)] max-w-7xl mx-auto">
+        {/* Top Left - Globe */}
+        <div className="card bg-base-200 shadow-xl h-full">
+          <div className="card-body p-4">
+            <h2 className="card-title text-sm">Earth Monitoring Network</h2>
+            <div className="flex-1 min-h-0">
               <EarthGlobe data={earthData} />
             </div>
           </div>
         </div>
 
-        {/* Top Right Quadrant - Metrics */}
-        <EarthMetrics earthData={earthData} />
+        {/* Top Right - Metrics */}
+        <div className="card bg-base-200 shadow-xl h-full">
+          <div className="card-body p-4">
+            <EarthMetrics earthData={earthData} />
+          </div>
+        </div>
 
-        {/* Bottom Left Quadrant - Status */}
-        <StatusBars earthData={earthData} />
+        {/* Bottom Left - Status Bars */}
+        <div className="card bg-base-200 shadow-xl h-full">
+          <div className="card-body p-4">
+            <StatusBars earthData={earthData} />
+          </div>
+        </div>
 
-        {/* Bottom Right Quadrant - Chat */}
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body p-2 flex flex-col">
-            <div className="flex-1 overflow-y-auto max-h-[400px]">
+        {/* Bottom Right - Chat */}
+        <div className="card bg-base-200 shadow-xl h-full">
+          <div className="card-body p-4 flex flex-col">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {conversation.map((msg, index) => (
                 <div
                   key={index}
@@ -442,16 +450,16 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
               ))}
               <div ref={chatEndRef} />
             </div>
-            <form onSubmit={handleLocalSubmit} className="mt-2">
+            <form onSubmit={handleLocalSubmit} className="mt-4">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ask Earth anything..."
-                  className="input input-bordered input-sm flex-1"
+                  className="input input-bordered flex-1"
                 />
-                <button type="submit" className="btn btn-primary btn-sm">
+                <button type="submit" className="btn btn-primary">
                   Send
                 </button>
               </div>
