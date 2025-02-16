@@ -177,8 +177,8 @@ export function EarthGlobe({ data }: { data: EarthData }) {
         
         globe.current = new Globe(element)
           .backgroundColor('rgba(0,0,0,0)')
-          .width(300)         // Set fixed width
-          .height(300)        // Set fixed height
+          .width(600)         // Set fixed width
+          .height(600)        // Set fixed height
           .globeImageUrl('/earth-blue-marble.jpg')
           .bumpImageUrl('/earth-topology.png')
           .showAtmosphere(true)
@@ -428,10 +428,10 @@ export function EarthGlobe({ data }: { data: EarthData }) {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="relative w-full h-full">
+      <div className=" w-full h-full flex justify-center items-center">
         <div 
           ref={globeEl} 
-          className="absolute inset-0"
+          className=" inset-0"
         />
       </div>
     </ErrorBoundary>
