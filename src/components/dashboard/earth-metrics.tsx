@@ -7,12 +7,12 @@ interface EarthMetricsProps {
 
 export function EarthMetrics({ earthData }: EarthMetricsProps) {
   return (
-    <div className="card bg-base-200 shadow-xl overflow-y-auto">
+    <div className="">
       <div className="card-body p-2">
         <h2 className="card-title text-xs">Earth Metrics</h2>
         <div className="space-y-2">
           {/* Schumann Resonance Accordion */}
-          <div className="collapse collapse-arrow bg-base-100">
+          <div className="collapse collapse-arrow border border-zinc-800">
             <input type="radio" name="earth-accordion-desktop" defaultChecked />
             <div className="collapse-title text-sm font-medium">
               Schumann Resonance
@@ -41,7 +41,7 @@ export function EarthMetrics({ earthData }: EarthMetricsProps) {
           </div>
 
           {/* Solar Activity Accordion */}
-          <div className="collapse collapse-arrow bg-base-100">
+          <div className="collapse collapse-arrow border  border-zinc-800">
             <input type="radio" name="earth-accordion-desktop" />
             <div className="collapse-title text-sm font-medium">
               Solar Activity
@@ -60,7 +60,7 @@ export function EarthMetrics({ earthData }: EarthMetricsProps) {
           </div>
 
           {/* Geomagnetic Activity Accordion */}
-          <div className="collapse collapse-arrow bg-base-100">
+          <div className="collapse collapse-arrow border border-zinc-800">
             <input type="radio" name="earth-accordion-desktop" />
             <div className="collapse-title text-sm font-medium">
               Geomagnetic Activity
@@ -79,7 +79,7 @@ export function EarthMetrics({ earthData }: EarthMetricsProps) {
           </div>
 
           {/* Global Coherence Accordion */}
-          <div className="collapse collapse-arrow bg-base-100">
+          <div className="collapse collapse-arrow border border-zinc-800">
             <input type="radio" name="earth-accordion-desktop" />
             <div className="collapse-title text-sm font-medium">
               Global Coherence

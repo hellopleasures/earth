@@ -12,15 +12,15 @@ import {WalletButton} from '../solana/solana-provider'
 
 export function UiLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="h-full flex flex-col">
-      <div className="navbar bg-base-300 dark:text-neutral-content">
-        <div className="flex-1">
-          <div className="text-xl font-bold px-4">Earth Interface</div>
+    <div className="flex flex-col h-full font-montserrat">
+      <div className="navbar bg-zinc-950 py-10">
+        <div className="flex-1 justify-center">
+          <div className="text-xl font-black px-4 font-montserrat text-white">Earth Interface</div>
         </div>
       </div>
       <ClusterChecker>
         <AccountChecker />
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-4 bg-zinc-950">
           <div className="max-w-6xl mx-auto h-full">
             {children}
           </div>
