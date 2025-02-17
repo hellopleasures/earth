@@ -26,6 +26,8 @@ import { Line } from 'react-chartjs-2';
 import { EarthGlobe } from './earth-globe';
 import { StatusBars } from './status-bars';
 import { EarthMetrics } from './earth-metrics';
+import MessageInput from '../MessageInput';
+import ChatBox from '../ChatBox';
 
 interface EarthStatusProps {
   conversation: { 
@@ -87,6 +89,31 @@ export function EarthStatus({ conversation, message, setMessage, handleSubmit: p
   const [earthData, setEarthData] = useState<EarthData | null>(null);
   const [loading, setLoading] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<string>("Agent");
+
+  const sendMessage = async (input: string) => {
+    // Add user message to state
+    const userMessage = { sender: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
+  
+    try {
+      // Send user input to the backend
+      const response = await fetch("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
+  
+      // Add bot's response to state
+      const data: { sender: string; text: string }[] = await response.json();
+      const botMessage = { sender: "bot", text: data[0]?.text || "No response" };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
 
   useEffect(() => {
     const updateEarthData = async () => {
@@ -402,69 +429,37 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
       </div>
 
       {/* Desktop Layout - 2x2 Grid */}
-      <div className="hidden md:grid grid-cols-2 gap-4 p-4 h-[calc(100vh-4rem)] max-w-7xl mx-auto">
+      <div className="hidden md:grid grid-cols-2 gap-4 p-4 h-full max-w-7xl mx-auto">
         {/* Top Left - Globe */}
-        <div className="card bg-base-200 shadow-xl h-full">
+        <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
           <div className="card-body p-4">
             <h2 className="card-title text-sm">Earth Monitoring Network</h2>
-            <div className="flex-1 min-h-0">
               <EarthGlobe data={earthData} />
-            </div>
           </div>
         </div>
 
         {/* Top Right - Metrics */}
-        <div className="card bg-base-200 shadow-xl h-full">
+        <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
           <div className="card-body p-4">
             <EarthMetrics earthData={earthData} />
           </div>
         </div>
 
         {/* Bottom Left - Status Bars */}
-        <div className="card bg-base-200 shadow-xl h-full">
-          <div className="card-body p-4">
+        <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
+          <div className="p-4">
             <StatusBars earthData={earthData} />
           </div>
         </div>
 
         {/* Bottom Right - Chat */}
-        <div className="card bg-base-200 shadow-xl h-full">
-          <div className="card-body p-4 flex flex-col">
-            <div className="flex-1 overflow-y-auto min-h-0">
-              {conversation.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
-                >
-                  <div className={`chat-bubble ${
-                    msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
-                  }`}>
-                    <div className="flex flex-col">
-                      <span>{msg.content}</span>
-                      <span className="text-xs opacity-50 mt-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
+        <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
+          <div className="card-body p-4 flex flex-col h-full">
+            <div className="flex flex-col h-full">
+              <ChatBox messages={messages} />
+              <MessageInput onSend={sendMessage} />
             </div>
-            <form onSubmit={handleLocalSubmit} className="mt-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask Earth anything..."
-                  className="input input-bordered flex-1"
-                />
-                <button type="submit" className="btn btn-primary">
-                  Send
-                </button>
-              </div>
-            </form>
-          </div>
+          </div>  
         </div>
       </div>
     </div>

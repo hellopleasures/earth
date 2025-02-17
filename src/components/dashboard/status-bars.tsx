@@ -6,7 +6,7 @@ interface StatusBarsProps {
 
 export function StatusBars({ earthData }: StatusBarsProps) {
   return (
-    <div className="card bg-base-200 shadow-xl h-full">
+    <div className="">
       <div className="card-body p-2">
         <h2 className="card-title text-xs">System Status</h2>
         <div className="space-y-2">
