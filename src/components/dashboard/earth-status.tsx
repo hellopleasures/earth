@@ -233,6 +233,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
       {/* Mobile Layout */}
       <div className="md:hidden flex flex-col gap-2 p-2">
 
+
       <div className="p-2 h-[500px]">
           <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
             <div className="card-body p-2">
