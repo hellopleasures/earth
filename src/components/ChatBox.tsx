@@ -8,7 +8,7 @@ interface ChatBoxProps {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex gap-4 max-w-[80%] ${
+            className={`flex gap-4 sm:max-w-[80%] ${
               message.sender === "user" ? "self-end flex-row-reverse" : ""
             }`}
           >
@@ -23,7 +23,7 @@ interface ChatBoxProps {
                 ? "bg-gray-600 text-white" 
                 : "bg-pink-600 text-white"}
             `}>
-              <span className="text-sm leading-none">{message.text}</span>
+              <span className="text-xs sm:text-sm leading-none">{message.text}</span>
             </div>
           </div>
         ))}

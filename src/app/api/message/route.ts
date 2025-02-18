@@ -15,12 +15,20 @@ export async function POST(req: Request) {
       }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API request failed: ${errorText}`);
+    }
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error in message API route:", error);
     return NextResponse.json(
-      { error: "Failed to communicate with agent" },
+      { 
+        error: "Failed to communicate with agent",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }
