@@ -235,7 +235,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
 
       <div className="p-2">
           <div className="card bg-base-200 shadow-xl mb-2">
-            <div className="card-body border p-2">
+            <div className="card-body p-2">
               <h2 className="card-title text-xs">Earth Monitoring Network</h2>
               <EarthGlobe data={earthData} />
             </div>
