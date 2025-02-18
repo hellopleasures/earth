@@ -233,9 +233,9 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
       {/* Mobile Layout */}
       <div className="md:hidden flex flex-col gap-2 p-2">
 
-      <div className="p-2">
-          <div className="card bg-base-200 shadow-xl mb-2">
-            <div className="card-body border p-2">
+      <div className="p-2 h-[500px]">
+          <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
+            <div className="card-body p-2">
               <h2 className="card-title text-xs">Earth Monitoring Network</h2>
               <EarthGlobe data={earthData} />
             </div>
@@ -243,7 +243,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
         </div>
         {/* Status Bars */}
         <div className="p-2">
-          <div className="card bg-base-200 shadow-xl mb-2">
+          <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
             <div className="card-body p-2">
               <h2 className="card-title text-xs">System Status</h2>
               <div className="space-y-2">
@@ -305,11 +305,11 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
 
         {/* Accordion Menu */}
         <div className="p-2">
-          <div className="card bg-base-200 shadow-xl">
+          <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
             <div className="card-body p-2">
               <div className="space-y-2">
                 {/* Existing accordion items... */}
-                <div className="collapse collapse-arrow bg-base-100">
+                <div className="collapse collapse-arrow border border-zinc-800">
                   <input type="radio" name="earth-accordion" defaultChecked /> 
                   <div className="collapse-title text-sm font-medium">
                     Schumann Resonance
@@ -338,7 +338,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
                 </div>
 
                 {/* Solar Activity Accordion */}
-                <div className="collapse collapse-arrow bg-base-100">
+                <div className="collapse collapse-arrow border border-zinc-800">
                   <input type="radio" name="earth-accordion" />
                   <div className="collapse-title text-sm font-medium">
                     Solar Activity
@@ -357,7 +357,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
                 </div>
 
                 {/* Geomagnetic Activity Accordion */}
-                <div className="collapse collapse-arrow bg-base-100">
+                <div className="collapse collapse-arrow border border-zinc-800">
                   <input type="radio" name="earth-accordion" />
                   <div className="collapse-title text-sm font-medium">
                     Geomagnetic Activity
@@ -376,7 +376,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
                 </div>
 
                 {/* Global Coherence Accordion */}
-                <div className="collapse collapse-arrow bg-base-100">
+                <div className="collapse collapse-arrow border border-zinc-800">
                   <input type="radio" name="earth-accordion" />
                   <div className="collapse-title text-sm font-medium">
                     Global Coherence
@@ -396,7 +396,7 @@ ${data.geomagneticStorms.polarActivity ? '🌈 Aurora activity likely' : '✅ No
 
         {/* Chat Section */}
         <div className="p-2 flex-1">
-          <div className="card bg-base-200 shadow-xl h-full flex flex-col">
+          <div className="border bg-card text-card-foreground shadow-sm w-full items-center justify-between rounded-lg bg-clip-border border-zinc-800">
             <div className="card-body p-2 flex-1 flex flex-col">
               <div className="flex-1 overflow-y-auto max-h-[400px]">
               <ChatBox messages={messages} />

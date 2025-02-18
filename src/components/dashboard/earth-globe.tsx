@@ -428,7 +428,7 @@ export function EarthGlobe({ data }: { data: EarthData }) {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className=" w-full h-full flex justify-center items-center">
+      <div className=" w-full h-[450px] flex justify-center items-center">
         <div 
           ref={globeEl} 
           className=" inset-0"
